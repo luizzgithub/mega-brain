@@ -1,0 +1,38 @@
+{
+  "name": "mega-brain",
+  "version": "1.0.0",
+  "description": "Node.js API + web UI for local audio transcription via whisper.cpp — queue-backed, single-binary, no cloud",
+  "main": "src/server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luizzgithub/mega-brain.git"
+  },
+  "author": "luizzgithub",
+  "homepage": "https://github.com/luizzgithub/mega-brain#readme",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "download-model": "node scripts/download-model.js",
+    "download-small-model": "node scripts/download-small-model.js",
+    "download-base-model": "node scripts/download-base-model.js"
+  },
+  "keywords": [
+    "whisper",
+    "whisper.cpp",
+    "transcription",
+    "speech-to-text",
+    "api",
+    "local-ai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.6",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "form-data": "^4.0.5",
+    "multer": "^2.1.1",
+    "p-queue": "^9.1.0",
+    "winston": "^3.19.0"
+  }
+}

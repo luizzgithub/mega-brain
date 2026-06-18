@@ -1,0 +1,16 @@
+node_modules/
+uploads/*
+!uploads/.gitkeep
+logs/*
+!logs/.gitkeep
+.env
+*.log
+CLAUDE.md
+.claude/*
+.cursor/*
+.manos/*
+# áudios de teste locais
+tests/*.mp3
+tests/*.wav
+tests/*.webm
+tests/*.ogg
