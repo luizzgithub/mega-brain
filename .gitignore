@@ -14,3 +14,4 @@ tests/*.mp3
 tests/*.wav
 tests/*.webm
 tests/*.ogg
+data/media/*

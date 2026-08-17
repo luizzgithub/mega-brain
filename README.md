@@ -1,160 +1,179 @@
-# 🧠 Mega Cerebro — Whisper Serve
+# 🧠 Mega Cérebro
 
-API Node.js + interface web para transcrição de áudio usando **whisper.cpp** rodando localmente. Resolve o problema de o `whisper-server.exe` aceitar apenas uma requisição por vez: as chamadas entram em uma fila e são processadas na ordem de chegada.
+Assistente conversacional local com transcrição de áudio/vídeo via **whisper.cpp**, dashboard web multi-página, chat com IA, briefing diário, gestão de projetos e kanban de tasks.
 
 ```
-Navegador / Cliente HTTP
-        ↓
-POST /api/transcribe
-        ↓
-   Fila (p-queue)
-        ↓
- whisper-server.exe
-        ↓
-  texto transcrito
+Navegador
+    ↓
+/login.html  →  JWT  →  Dashboard (menu lateral)
+    ↓                        ↓
+Express API (porta 4144)   Chat · Recorder · Briefing · Projetos · Kanban
+    ↓
+Fila (p-queue) → whisper-server.exe → texto transcrito
+    ↓
+SQLite (data/app.db)
 ```
-
-A interface web (`/public`) tem visualizador de onda sonora em tempo real, animação de transcrição e acumula o texto a cada gravação.
 
 ---
 
 ## Pré-requisitos
 
-| Ferramenta | Versão mínima | Link |
-|------------|--------------|------|
+| Ferramenta | Versão mínima | Observação |
+|------------|--------------|------------|
 | Node.js | v18+ | https://nodejs.org |
-| whisper-server.exe | qualquer build recente | ver abaixo |
-| FFmpeg | qualquer versão estável | ver abaixo |
+| whisper-server.exe | build recente | whisper.cpp releases |
+| FFmpeg | estável | conversão de áudio/vídeo |
+| Python | 3.x | opcional, para diarização |
 
 ---
 
-## 1. Baixar o whisper.cpp
+## Instalação rápida
 
-Acesse a página de releases do projeto:
+### 1. Clonar e instalar
 
-> **https://github.com/ggerganov/whisper.cpp/releases**
-
-Baixe o pacote para Windows (ex: `whisper-bin-x64.zip`) e extraia. O arquivo que você precisa é o **`whisper-server.exe`**.
-
-Coloque-o neste caminho:
-
-```
-C:\Tools\whisper\whisper-server.exe
+```bash
+git clone https://github.com/luizzgithub/mega-brain.git
+cd mega-brain
+npm install
 ```
 
-> Não tem esse caminho? Crie as pastas: `C:\Tools\whisper\` e dentro dela `models\`.
+### 2. Whisper + FFmpeg
 
----
-
-## 2. Baixar o FFmpeg
-
-O FFmpeg é necessário para converter os formatos de áudio enviados para WAV antes de passar ao whisper.
-
-**Opção A — via winget (mais fácil):**
-```powershell
-winget install ffmpeg
-```
-
-**Opção B — manual:**
-Baixe em https://ffmpeg.org/download.html, extraia e adicione a pasta `bin\` ao PATH do sistema.
-
-Confirme que funcionou:
-```powershell
-ffmpeg -version
-```
-
----
-
-## 3. Estrutura de pastas esperada
+Baixe o [whisper.cpp release](https://github.com/ggerganov/whisper.cpp/releases) (Windows: `whisper-bin-x64.zip`) e coloque em:
 
 ```
 C:\Tools\whisper\
 ├── whisper-server.exe
 └── models\
-    └── ggml-medium.bin    ← baixado no passo 5
+    └── ggml-medium.bin
 ```
 
----
+FFmpeg via winget:
 
-## 4. Instalar dependências
-
-```bash
-npm install
+```powershell
+winget install ffmpeg
+ffmpeg -version
 ```
 
----
-
-## 5. Configurar
-
-Copie o arquivo de exemplo de configuração:
+### 3. Configurar ambiente
 
 ```powershell
 copy .env.example .env
 ```
 
-Abra o `.env` e ajuste se necessário. Os padrões já apontam para `C:\Tools\whisper\` e funcionam sem alteração se você seguiu a estrutura acima.
+Ajuste paths no `.env` se necessário. Padrões apontam para `C:\Tools\whisper\`.
 
----
-
-## 6. Baixar o modelo de IA
+### 4. Baixar modelo
 
 ```bash
-npm run download-model        # ggml-medium  (~1.5 GB) — melhor qualidade
-npm run download-small-model  # ggml-small   (~500 MB) — equilibrado
-npm run download-base-model   # ggml-base    (~150 MB) — mais rápido
+npm run download-model          # medium (~1.5 GB) — recomendado
+npm run download-small-model    # small (~500 MB)
+npm run download-base-model     # base (~150 MB)
+npm run download-large-v3-model # large-v3 (~3 GB)
 ```
 
-O modelo é salvo automaticamente em `C:\Tools\whisper\models\`.
-
-> Para trocar o modelo depois, edite `WHISPER_MODEL_PATH` no `.env`.
-
----
-
-## 7. Rodar
+### 5. Criar usuário admin
 
 ```bash
-npm start        # modo produção
-npm run dev      # modo desenvolvimento (reinicia ao salvar arquivos)
+node scripts/seed-admin.js
 ```
 
-Abra o navegador em:
+Credenciais padrão: **`admin@teste.com`** / **`admin123`**
 
-> **http://localhost:4144**
+### 6. Iniciar
+
+```bash
+npm start     # produção
+npm run dev   # desenvolvimento (hot-reload)
+```
+
+Abra: **http://localhost:4144/login.html**
 
 ---
 
 ## Interface web
 
-Clique no botão central para iniciar a gravação. O gráfico de onda mostra o áudio sendo capturado em tempo real. Ao parar, o áudio é enviado ao servidor e o texto transcrito vai sendo acumulado na área de texto.
+Dashboard com menu lateral fixo. Login dedicado em `/login.html`.
+
+| Página | URL | Função |
+|--------|-----|--------|
+| Login | `/login.html` | Entrar ou cadastrar |
+| Chat | `/chat.html` | Assistente conversacional |
+| Recorder | `/recorder.html` | Gravar/upload de áudio e transcrições |
+| Briefing | `/briefing.html` | Resumo do dia, lembretes e sugestões |
+| Projetos | `/projects.html` | CRUD de projetos |
+| Kanban | `/kanban.html` | Tasks em colunas com drag-and-drop |
+
+### Navegação e auth
+
+- **`/`** — redireciona para login (sem token) ou chat (com token)
+- Páginas protegidas redirecionam para `/login.html?returnTo=...` se não autenticado
+- Após login, volta para a página solicitada ou `/chat.html`
+- **Sair** no menu lateral limpa a sessão e vai para `/login.html`
+
+Token JWT fica em `localStorage` (`mc_token`).
 
 ---
 
 ## API
 
-Referência completa em [API.md](./API.md).
+Referência detalhada em [API.md](./API.md).
 
-Exemplo rápido com curl:
+### Endpoints principais
+
+| Método | Path | Auth | Descrição |
+|--------|------|------|-----------|
+| POST | `/api/auth/login` | — | Login (email, password) |
+| POST | `/api/auth/register` | — | Cadastro |
+| GET | `/api/auth/me` | ✓ | Dados do usuário logado |
+| POST | `/api/transcribe` | ✓ | Upload e transcrição de áudio/vídeo |
+| GET | `/api/status` | — | Status da fila e whisper-server |
+| GET | `/api/health` | — | Health check |
+| POST | `/api/chat` | ✓ | Enviar mensagem ao assistente |
+| GET | `/api/briefing` | ✓ | Briefing do dia |
+| GET/POST | `/api/projects` | ✓ | Listar/criar projetos |
+| GET/POST | `/api/tasks` | ✓ | Listar/criar tasks |
+| GET | `/api/transcriptions` | ✓ | Histórico de transcrições |
+
+### Exemplo — transcrever áudio
 
 ```bash
-# transcrever um arquivo
+# 1. Obter token
+curl -X POST http://localhost:4144/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@teste.com","password":"admin123"}'
+
+# 2. Transcrever (substitua TOKEN)
 curl -X POST http://localhost:4144/api/transcribe \
+  -H "Authorization: Bearer TOKEN" \
   -F "file=@audio.wav" \
   -F "language=pt"
-
-# verificar status da fila e do servidor whisper
-curl http://localhost:4144/api/status
 ```
 
-Resposta:
+---
 
-```json
-{
-  "success": true,
-  "duration_ms": 1420,
-  "result": {
-    "text": "Olá, este é um exemplo de transcrição."
-  }
-}
+## Estrutura do projeto
+
+```
+mega-brain/
+├── public/              # Frontend estático
+│   ├── login.html       # Página de login
+│   ├── chat.html        # Páginas do dashboard
+│   ├── js/              # Módulos ES (main, shell, auth, chat, …)
+│   └── css/app.css      # Estilos globais + shell + kanban
+├── src/
+│   ├── server.js        # Entry point
+│   ├── app.js           # Express + rotas
+│   ├── db.js            # Schema SQLite
+│   ├── queue.js         # Fila de transcrição
+│   ├── whisperProcess.js
+│   └── routes/          # Rotas API por domínio
+├── data/
+│   ├── app.db           # Banco SQLite
+│   └── media/           # Arquivos de mídia persistidos
+├── uploads/             # Temporários de upload
+├── logs/                # combined.log, error.log
+└── scripts/             # seed-admin, download-model, check-tools
 ```
 
 ---
@@ -163,14 +182,29 @@ Resposta:
 
 | Variável | Padrão | Descrição |
 |----------|--------|-----------|
-| `PORT` | `4144` | Porta da API |
-| `WHISPER_SERVER_PATH` | `C:\Tools\whisper\whisper-server.exe` | Caminho do executável |
-| `WHISPER_MODEL_PATH` | `C:\Tools\whisper\models\ggml-medium.bin` | Caminho do modelo |
-| `WHISPER_LANGUAGE` | `pt` | Idioma padrão (`pt`, `en`, `es`, `auto`…) |
-| `WHISPER_THREADS` | `4` | Threads de CPU para o whisper |
-| `WHISPER_PORT` | `8080` | Porta interna do whisper-server |
+| `PORT` | `4144` | Porta da API/web |
+| `WHISPER_SERVER_PATH` | `C:\Tools\whisper\whisper-server.exe` | Executável whisper |
+| `WHISPER_MODEL_PATH` | `...\ggml-medium.bin` | Modelo GGML |
+| `WHISPER_LANGUAGE` | `pt` | Idioma padrão |
+| `WHISPER_THREADS` | `4` | Threads CPU |
+| `WHISPER_PORT` | `8080` | Porta interna whisper-server |
 | `QUEUE_CONCURRENCY` | `1` | Jobs simultâneos na fila |
-| `MAX_FILE_SIZE_MB` | `50` | Limite de tamanho de upload |
+| `MAX_FILE_SIZE_MB` | `500` | Limite de upload |
+| `JWT_SECRET` | `mega-brain-dev-secret` | Segredo JWT (altere em produção) |
+| `ASSISTANT_BRIEFING_MODEL` | `gpt-4o-mini` | Modelo do briefing |
+| `PROXY_HUB_URL` | — | LLM alternativo (opcional) |
+| `SEARXNG_BASE_URL` | `http://localhost:4000` | Buscador web (opcional) |
+
+Ver `.env.example` para lista completa (ProxyHub, SearXNG, Scraper, diarização, etc.).
+
+---
+
+## Scripts úteis
+
+```bash
+npm run check-tools    # diagnóstico de ffmpeg, python, whisper
+node scripts/seed-admin.js   # recriar admin se necessário
+```
 
 ---
 

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrar — Mega Cérebro</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body data-page="login">
+  <div id="authScreen">
+    <div class="auth-card">
+      <h1>MEGA CÉREBRO</h1>
+      <p class="subtitle">Seu assistente conversacional proativo</p>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Entrar</div>
+        <div class="auth-tab" data-tab="register">Cadastrar</div>
+      </div>
+
+      <form id="authForm" onsubmit="return false;">
+        <div class="form-group" id="nameGroup" style="display:none;">
+          <label for="name">Nome</label>
+          <input type="text" id="name" autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input type="password" id="password" autocomplete="current-password" required />
+        </div>
+        <button type="button" id="authSubmit" class="btn btn-primary">Entrar</button>
+        <div id="authError" class="auth-error"></div>
+      </form>
+    </div>
+  </div>
+  <div id="toast"></div>
+  <script type="module" src="/js/login.js"></script>
+</body>
+</html>

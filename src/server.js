@@ -2,8 +2,8 @@ const app = require('./app');
 const config = require('./config');
 const logger = require('./logger');
 const whisperProcess = require('./whisperProcess');
+const { checkWhisperCli } = require('./services/checkTools');
 const fs = require('fs');
-const path = require('path');
 
 async function checkModel() {
   if (!fs.existsSync(config.whisper.model)) {
@@ -16,18 +16,34 @@ async function checkModel() {
 
 async function startServer() {
   try {
-    logger.info('Starting Whisper-Serve API...');
-    
-    const modelExists = await checkModel();
-    if (modelExists) {
-        // Start whisper-server.exe
+    logger.info('Starting Mega Cerebro API...');
+
+    [config.uploadDir, config.mediaDir].forEach((dir) => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        logger.info(`Created directory: ${dir}`);
+      }
+    });
+
+    if (config.whisper.mode === 'server') {
+      const modelExists = await checkModel();
+      if (modelExists) {
         await whisperProcess.start();
-    } else {
+      } else {
         logger.error('CRITICAL: Cannot start whisper-server without a model. API will remain online but transcription will fail.');
+      }
+    } else {
+      const whisperCheck = await checkWhisperCli();
+      if (whisperCheck.ok) {
+        logger.info(`Whisper mode: CLI (on-demand) — model ${config.whisper.modelName}`);
+      } else {
+        logger.warn(`Whisper CLI not ready: ${whisperCheck.hint}`);
+        logger.warn('API will remain online but transcription will fail until configured.');
+      }
     }
 
     app.listen(config.port, () => {
-      logger.info(`Whisper-Serve API listening on http://localhost:${config.port}`);
+      logger.info(`Mega Cerebro API listening on http://localhost:${config.port}`);
     });
   } catch (error) {
     logger.error(`Failed to start server: ${error.message}`);
@@ -38,13 +54,17 @@ async function startServer() {
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   logger.info('SIGINT received. Shutting down...');
-  await whisperProcess.stop();
+  if (config.whisper.mode === 'server') {
+    await whisperProcess.stop();
+  }
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received. Shutting down...');
-  await whisperProcess.stop();
+  if (config.whisper.mode === 'server') {
+    await whisperProcess.stop();
+  }
   process.exit(0);
 });
 

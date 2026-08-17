@@ -3,6 +3,16 @@ const cors = require('cors');
 const path = require('path');
 const logger = require('./logger');
 const routes = require('./routes');
+const chatRoutes = require('./routes/chat');
+const briefingRoutes = require('./routes/briefing');
+const suggestionRoutes = require('./routes/suggestions');
+const authRoutes = require('./routes/auth');
+const reminderRoutes = require('./routes/reminders');
+const transcriptionRoutes = require('./routes/transcriptions');
+const knowledgeRoutes = require('./routes/knowledge');
+const searchRoutes = require('./routes/search');
+const projectRoutes = require('./routes/projects');
+const taskRoutes = require('./routes/tasks');
 const config = require('./config');
 
 const app = express();
@@ -19,6 +29,16 @@ app.use((req, res, next) => {
 });
 
 app.use('/api', routes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/briefing', briefingRoutes);
+app.use('/api/suggestions', suggestionRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/transcriptions', transcriptionRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
